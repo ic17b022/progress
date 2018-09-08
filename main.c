@@ -40,12 +40,12 @@ int main(void) {
 }
 
 static unsigned int getPercentFromProgress (unsigned int progressAll){
-    int progress = 0;
+    unsigned int progress = 0;
 
     for (int i = 0; i < 4; i++){
         progress += progressAll & 0xFF;
         progressAll = progressAll >> 8;
     }
 
-    return progress/4;  //rounding down is fine.
+    return progress* 100 / 255 /4;  // 100/255 to get percent, 4 to account for 4 processes. Rounding down is fine.
 }
