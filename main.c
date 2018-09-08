@@ -2,17 +2,16 @@
 #include <unistd.h>
 #include "progress.h"
 
-static unsigned int getPercentFromProgress (unsigned int progressAll);
-
 int main(void) {
-    int progress = 0;
+    unsigned int progressAll = 0;
+    unsigned int percent = 0;
     int activeInt = 0;
     char activeChar;
 
     init_io();
 
 
-    while(progress < 100){
+    while(percent < 100){
         switch (activeInt){
             case 0: activeChar = '/';
                     break;
@@ -23,10 +22,20 @@ int main(void) {
             default: assert(0);
         }
 
-        progress = getPercentFromProgress (get_progress());
-        progressbar('=', activeChar, ' ', progress);
+        progressAll = get_progress();
+        percent = 0;
 
-        activeInt = ++activeInt % 3;
+        for (int i = 0; i < 4; i++){
+            percent += progressAll & 0xFF;
+            progressAll = progressAll >> 8;
+        }
+
+        percent = percent * 100 / 255; //scale from 255 to 100 to get percent.
+        percent = percent / 4; //average over the 4 processes.          Both lines round down. Should be fine.
+
+        progressbar('=', activeChar, ' ', percent);
+
+        activeInt = (activeInt + 1) % 3;
 
 #ifdef DEBUG
         wait_key();
@@ -37,15 +46,4 @@ int main(void) {
     shutdown_io();
 
     return 0;
-}
-
-static unsigned int getPercentFromProgress (unsigned int progressAll){
-    unsigned int progress = 0;
-
-    for (int i = 0; i < 4; i++){
-        progress += progressAll & 0xFF;
-        progressAll = progressAll >> 8;
-    }
-
-    return progress* 100 / 255 /4;  // 100/255 to get percent, 4 to account for 4 processes. Rounding down is fine.
 }
